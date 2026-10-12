@@ -1,7 +1,13 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
+<script setup lang="ts">
+import AppFooter from "./components/AppFooter.vue";
+import AppHeader from "./components/AppHeader.vue";
+import CatalogView from "./views/CatalogView.vue";
 </script>
 
 <template>
-  <HelloWorld />
+  <AppHeader />
+  <main>
+    <CatalogView />
+  </main>
+  <AppFooter />
 </template>
