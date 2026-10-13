@@ -1,10 +1,14 @@
 <script setup>
+import { onMounted } from "vue";
 import HeroSection from "../components/HeroSection.vue";
 import { useProductSore } from "../stores/useProduct.js";
 
-const response = useProductSore();
-
-response.loadProduct();
+const ProductSore = useProductSore();
+// ProductSore.init()
+console.log(ProductSore.data);
+onMounted(() => {
+  ProductSore.init();
+});
 
 </script>
 
@@ -91,7 +95,7 @@ response.loadProduct();
         </div>
         <div class="product-grid">
           <article
-            v-for="product in response.data"
+            v-for="product in ProductSore.active"
             :key="product.id"
             class="product-card"
             data-component="ProductCard"
@@ -110,7 +114,12 @@ response.loadProduct();
                   width="360"
                 />
               </a>
-              <span class="promo-tag" v-if="product.salePrice"> Promo −{{ (product.price - product.salePrice)/product.price }} % </span>
+              <span class="promo-tag" v-if="product.salePrice">
+                Promo −{{
+                  ((product.price - product.salePrice) / product.price) * 100
+                }}
+                %
+              </span>
             </div>
             <div class="product-body">
               <p class="overline">{{ product.origin }}</p>

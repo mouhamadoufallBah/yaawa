@@ -10,10 +10,10 @@ export const useProductSore = defineStore('products', () => {
 
     function loadProduct() {
         loading.value = true
-        setTimeout(() => {
-            data.value = products;
-            loading.value = false
-        }, 2000);
+        // setTimeout(() => {
+        data.value = products;
+        loading.value = false
+        // }, 1000);
 
     }
 
@@ -23,16 +23,51 @@ export const useProductSore = defineStore('products', () => {
 
     function loadCategory() {
         loadingCategory.value = true;
-        setTimeout(() => {
-            categories.value = [];
-            loadingCategory.value = false;
-        }, 1000)
+        // setTimeout(() => {
+        categories.value = [];
+        loadingCategory.value = false;
+        // }, 1000)
     }
 
+    const loadingAddProduct = ref(false);
+    const errorAddProduct = ref('');
 
-    const active = computed(()=>{
-        data.value.filter((one) => one.active)
-    })
+    function upsertProduct(payload) {
+        loadingAddProduct.value = true;
 
-    return { loadProduct, data, loadCategory, categories }
+        setTimeout(() => {
+            if (payload.id) {
+                index = data.value.findIndex((one) => one.id == payload.id)
+                if (index < 0) {
+                    data.value.push(payload);
+                } else {
+                    data.value[index] = payload;
+                }
+            }
+            loadingAddProduct.value = false;
+        }, 1000);
+    }
+
+    const active = computed(() => data.value.filter((one) => one.active))
+
+    function init() {
+        loadCategory();
+        loadProduct();
+    }
+
+    return {
+        init,
+        upsertProduct,
+        loadCategory,
+        loadProduct,
+        data,
+        active,
+        categories,
+        loading,
+        loadingAddProduct,
+        loadingCategory,
+        error,
+        errorAddProduct,
+        errorAddProduct
+    }
 });
