@@ -1,15 +1,39 @@
 <script setup>
-import { onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import HeroSection from "../components/HeroSection.vue";
-import { useProductSore } from "../stores/useProduct.js";
+import { useProductsStore } from "../stores/useProduct.js";
+import ProductCard from "../components/ProductCard.vue";
+import { useSettingStore } from "../stores/useSettingStore.js";
 
-const ProductSore = useProductSore();
-// ProductSore.init()
-console.log(ProductSore.data);
+const ProductSore = useProductsStore();
+const SettingStore = useSettingStore();
+
 onMounted(() => {
   ProductSore.init();
+  SettingStore.loadSettings();
+  console.log(ProductSore.active, "mounted");
 });
 
+
+
+const categoryId = ref(null);
+
+const dataFiltered = computed(() => {
+  if (categoryId.value) {
+    return ProductSore.active.filter(
+      (one) => one.categoryId == categoryId.value
+    );
+  }
+  return ProductSore.active;
+});
+
+function getProductByIdc(id) {
+  if (categoryId.value === id) {
+    categoryId.value = null;
+    return;
+  }
+  categoryId.value = id;
+}
 </script>
 
 
@@ -27,46 +51,17 @@ onMounted(() => {
         </div>
         <!-- DEMANDE 01 / 03 — À PROGRAMMER : Utiliser les catégories de l’API pour les images, la couleur CSS et le filtre. -->
         <div class="categories">
-          <a
+          <button
             class="category"
             href="categories/cereales.html"
             style="--category-color: #b98a38"
+            v-for="categorie in ProductSore.categories"
+            :key="categorie.id"
+            @click="getProductByIdc(categorie.id)"
           >
-            <img alt="" height="48" src="/images/cereales.svg" width="56" />
-            <span> Céréales </span>
-          </a>
-          <a
-            class="category"
-            href="categories/legumes.html"
-            style="--category-color: #468060"
-          >
-            <img alt="" height="48" src="/images/legumes.svg" width="56" />
-            <span> Légumes </span>
-          </a>
-          <a
-            class="category"
-            href="categories/epicerie.html"
-            style="--category-color: #b65c3a"
-          >
-            <img alt="" height="48" src="/images/epicerie.svg" width="56" />
-            <span> Épicerie </span>
-          </a>
-          <a
-            class="category"
-            href="categories/poisson.html"
-            style="--category-color: #477d87"
-          >
-            <img alt="" height="48" src="/images/poisson.svg" width="56" />
-            <span> Poisson </span>
-          </a>
-          <a
-            class="category"
-            href="categories/saveurs-locales.html"
-            style="--category-color: #956687"
-          >
-            <img alt="" height="48" src="/images/local.svg" width="56" />
-            <span> Saveurs locales </span>
-          </a>
+            <img alt="" height="48" :src="categorie.image" width="56" />
+            <span> {{ categorie.name }} </span>
+          </button>
         </div>
       </section>
       <section id="catalogue">
@@ -94,84 +89,12 @@ onMounted(() => {
           </a>
         </div>
         <div class="product-grid">
-          <article
-            v-for="product in ProductSore.active"
+          <ProductCard
+            v-for="product in dataFiltered"
             :key="product.id"
-            class="product-card"
-            data-component="ProductCard"
-            :data-product-id="product.id"
-          >
-            <div class="product-media">
-              <a
-                aria-label="Voir Riz brisé parfumé"
-                href="produits/01-riz.html"
-              >
-                <img
-                  :alt="product.name"
-                  height="240"
-                  loading="lazy"
-                  :src="product.image"
-                  width="360"
-                />
-              </a>
-              <span class="promo-tag" v-if="product.salePrice">
-                Promo −{{
-                  ((product.price - product.salePrice) / product.price) * 100
-                }}
-                %
-              </span>
-            </div>
-            <div class="product-body">
-              <p class="overline">{{ product.origin }}</p>
-              <h3>
-                <a href="produits/01-riz.html"> {{ product.name }} </a>
-              </h3>
-              <p class="muted small">
-                {{ product.unit }} · {{ product.stock }} disponible(s)
-              </p>
-              <span
-                :class="
-                  product.stock < 1
-                    ? 'stock empty'
-                    : product.stock <= 5
-                    ? 'stock low'
-                    : 'stock'
-                "
-              >
-                <span aria-hidden="true"> </span>
-                Disponible
-              </span>
-              <div class="product-bottom">
-                <div>
-                  <del v-if="product.salePrice">{{ product.price }}</del>
-                  <de>
-                    {{ product.salePrice ? product.salePrice : product.price }}
-                  </de>
-                </div>
-                <button
-                  aria-label="Ajouter Riz brisé parfumé au panier"
-                  class="add-button"
-                  data-action="ajouter-panier"
-                  type="button"
-                >
-                  <svg
-                    aria-hidden="true"
-                    class="icon"
-                    fill="none"
-                    height="20"
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.7"
-                    viewbox="0 0 24 24"
-                    width="20"
-                  >
-                    <path d="M12 5v14M5 12h14"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </article>
+            :product="product"
+            :currency="SettingStore.settings.currency"
+          />
         </div>
       </section>
       <section class="loyalty-banner mt">

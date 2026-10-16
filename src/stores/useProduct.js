@@ -1,73 +1,60 @@
-import { defineStore } from 'pinia';
-import { products } from '../services/Api';
-import { computed, ref } from 'vue';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { api } from "../services/Api";
+export const useProductsStore = defineStore("products", () => {
+    const items = ref([]),
+        loading = ref(false),
+        error = ref("");
 
+    const categories = ref([]),
+        categoryError = ref("");
 
-export const useProductSore = defineStore('products', () => {
-    const data = ref([]);
-    const loading = ref(false);
-    const error = ref('');
+    const active = computed(() => items.value.filter((p) => p.active));
 
-    function loadProduct() {
+    function upsert(product) {
+        const index = items.value.findIndex((p) => p.id === product.id);
+        if (index < 0) items.value.push(product);
+        else items.value[index] = product;
+    }
+
+    async function load() {
         loading.value = true
-        // setTimeout(() => {
-        data.value = products;
-        loading.value = false
-        // }, 1000);
+        try {
+            const products = await api.get('/products');
+            items.value = products;
 
+        } catch (e) {
+            error.value = e.message;
+        } finally {
+            loading.value = false
+        }
     }
 
-    const categories = ref([]);
-    const loadingCategory = ref(false);
-    const errorCategory = ref('');
-
-    function loadCategory() {
-        loadingCategory.value = true;
-        // setTimeout(() => {
-        categories.value = [];
-        loadingCategory.value = false;
-        // }, 1000)
+    async function loadCategories() {
+        try {
+            categories.value = await api.get("/categories");
+            categoryError.value = "";
+        } catch (e) {
+            categoryError.value = e.message;
+        }
     }
 
-    const loadingAddProduct = ref(false);
-    const errorAddProduct = ref('');
+    
 
-    function upsertProduct(payload) {
-        loadingAddProduct.value = true;
-
-        setTimeout(() => {
-            if (payload.id) {
-                index = data.value.findIndex((one) => one.id == payload.id)
-                if (index < 0) {
-                    data.value.push(payload);
-                } else {
-                    data.value[index] = payload;
-                }
-            }
-            loadingAddProduct.value = false;
-        }, 1000);
-    }
-
-    const active = computed(() => data.value.filter((one) => one.active))
-
-    function init() {
-        loadCategory();
-        loadProduct();
+    async function init() {
+        await Promise.all([load(), loadCategories(), loadSettings()]);
     }
 
     return {
-        init,
-        upsertProduct,
-        loadCategory,
-        loadProduct,
-        data,
-        active,
+        items,
         categories,
+        active,
         loading,
-        loadingAddProduct,
-        loadingCategory,
         error,
-        errorAddProduct,
-        errorAddProduct
-    }
+        categoryError,
+        load,
+        loadCategories,
+        init,
+        upsert,
+    };
 });
